@@ -29,7 +29,7 @@ spring:
     username: ${PAY_LIMIT_PROJECTION_DB_USERNAME:pay_admin}
     password: ${PAY_LIMIT_PROJECTION_DB_PASSWORD:}
   flyway:
-    enabled: ${FLYWAY_ENABLED:true}
+    enabled: ${FLYWAY_ENABLED:false}
     schemas: pay_limit_projection
     default-schema: pay_limit_projection
     create-schemas: true

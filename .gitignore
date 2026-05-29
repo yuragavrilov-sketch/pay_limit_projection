@@ -4,6 +4,9 @@ target/
 *.class
 *.log
 
+.env
+.env.*
+
 .idea/
 *.iml
 .vscode/

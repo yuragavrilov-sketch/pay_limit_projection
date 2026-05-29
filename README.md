@@ -40,7 +40,7 @@ projection tables are added in later increments.
 | `spring.datasource.url` | `PAY_LIMIT_PROJECTION_DB_URL` | `jdbc:postgresql://localhost:5432/pay_admin?currentSchema=pay_limit_projection` | Projection database URL. |
 | `spring.datasource.username` | `PAY_LIMIT_PROJECTION_DB_USERNAME` | `pay_admin` | Projection database user. |
 | `spring.datasource.password` | `PAY_LIMIT_PROJECTION_DB_PASSWORD` | empty | Local fallback database password. |
-| `spring.flyway.enabled` | `FLYWAY_ENABLED` | `true` | Enables schema migrations. |
+| `spring.flyway.enabled` | `FLYWAY_ENABLED` | `false` | Enables Flyway migrations when a local/compose DB is available. |
 | `pay-limit-projection.kafka.enabled` | `KAFKA_ENABLED` | `false` | Enables reservation event consumption. |
 | `pay-limit-projection.kafka.bootstrap-servers` | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:9092` | Kafka bootstrap servers. |
 | `pay-limit-projection.kafka.topic` | `KAFKA_TOPIC` | `pay-limit-engine-reservation-events` | Reservation lifecycle event topic. |
