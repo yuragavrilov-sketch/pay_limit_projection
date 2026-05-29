@@ -1,0 +1,52 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+pay:
+  environment: ${PAY_ENVIRONMENT:local}
+
+spring:
+  application:
+    name: pay-limit-projection
+  profiles:
+    default: local
+  config:
+    import:
+      - optional:configserver:${CONFIG_SERVER_URL:http://pay-config:8080}
+      - optional:vault://
+  cloud:
+    config:
+      enabled: ${CONFIG_SERVER_ENABLED:false}
+      label: ${CONFIG_SERVER_LABEL:${pay.environment}}
+    vault:
+      enabled: ${VAULT_ENABLED:false}
+      kv:
+        backend: ${VAULT_KV_BACKEND:pay}
+        default-context: ""
+        application-name: ${VAULT_KV_CONTEXTS:}
+        profiles: []
+  datasource:
+    url: ${PAY_LIMIT_PROJECTION_DB_URL:jdbc:postgresql://localhost:5432/pay_admin?currentSchema=pay_limit_projection}
+    username: ${PAY_LIMIT_PROJECTION_DB_USERNAME:pay_admin}
+    password: ${PAY_LIMIT_PROJECTION_DB_PASSWORD:}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    schemas: pay_limit_projection
+    default-schema: pay_limit_projection
+    create-schemas: true
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+pay-limit-projection:
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topic: ${KAFKA_TOPIC:pay-limit-engine-reservation-events}
+    group-id: ${KAFKA_GROUP_ID:pay-limit-projection}
