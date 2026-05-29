@@ -9,8 +9,8 @@ Postgres schema `pay_limit_projection`. It is not part of the online limit
 decision path: `pay-limit-engine` does not read this projection when evaluating,
 holding, confirming, or rolling back operations.
 
-The first increment exposes actuator endpoints only. Business read APIs and
-projection tables are added in later increments.
+The first increment exposes actuator endpoints only. Business read APIs are out
+of scope for this increment and require separate contracts.
 
 ## Stack
 
