@@ -22,7 +22,7 @@ spring:
       kv:
         backend: ${VAULT_KV_BACKEND:pay}
         default-context: ""
-        application-name: ${VAULT_KV_CONTEXTS:}
+        application-name: ${VAULT_KV_CONTEXTS:${pay.environment}/${spring.application.name}-db-password}
         profiles: []
   datasource:
     url: ${PAY_LIMIT_PROJECTION_DB_URL:jdbc:postgresql://localhost:5432/pay_admin?currentSchema=pay_limit_projection}
