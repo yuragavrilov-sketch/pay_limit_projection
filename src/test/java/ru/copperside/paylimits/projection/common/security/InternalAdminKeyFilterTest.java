@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.time.Clock;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -14,7 +16,7 @@ class InternalAdminKeyFilterTest {
 
     @Test
     void rejectsMissingKeyWhenRequired() throws Exception {
-        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true));
+        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true), Clock.systemUTC());
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/v1/limit-projection/reservations");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
@@ -27,7 +29,7 @@ class InternalAdminKeyFilterTest {
 
     @Test
     void allowsValidKeyWhenRequired() throws Exception {
-        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true));
+        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true), Clock.systemUTC());
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/v1/limit-projection/reservations");
         request.addHeader("X-Internal-Admin-Key", "secret");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -40,8 +42,20 @@ class InternalAdminKeyFilterTest {
 
     @Test
     void skipsNonInternalPaths() throws Exception {
-        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true));
+        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", true), Clock.systemUTC());
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/actuator/health");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
+    void allowsInternalPathWhenNotRequired() throws Exception {
+        InternalAdminKeyFilter filter = new InternalAdminKeyFilter(new InternalAdminKeyProperties("secret", false), Clock.systemUTC());
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/internal/v1/limit-projection/reservations");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain chain = mock(FilterChain.class);
 

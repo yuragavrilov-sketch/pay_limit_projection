@@ -9,15 +9,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Instant;
 
 @Component
 public class InternalAdminKeyFilter extends OncePerRequestFilter {
 
     private static final String HEADER = "X-Internal-Admin-Key";
     private final InternalAdminKeyProperties properties;
+    private final Clock clock;
 
-    public InternalAdminKeyFilter(InternalAdminKeyProperties properties) {
+    public InternalAdminKeyFilter(InternalAdminKeyProperties properties, Clock clock) {
         this.properties = properties;
+        this.clock = clock;
     }
 
     @Override
@@ -33,9 +37,9 @@ public class InternalAdminKeyFilter extends OncePerRequestFilter {
             if (provided == null || !provided.equals(properties.apiKey())) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-                response.getWriter().write("""
-                        {"error":{"type":"https://contracts.newpay/errors/unauthorized","title":"Unauthorized","status":401,"code":"UNAUTHORIZED","message":"Missing or invalid internal admin key","details":null,"traceId":"00000000-0000-0000-0000-000000000000"},"timestamp":"1970-01-01T00:00:00Z"}
-                        """);
+                response.getWriter().write(
+                        "{\"error\":{\"type\":\"https://contracts.newpay/errors/unauthorized\",\"title\":\"Unauthorized\",\"status\":401,\"code\":\"UNAUTHORIZED\",\"message\":\"Missing or invalid internal admin key\",\"details\":null,\"traceId\":\"00000000-0000-0000-0000-000000000000\"},\"timestamp\":\"" + Instant.now(clock) + "\"}"
+                );
                 return;
             }
         }
