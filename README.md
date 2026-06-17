@@ -35,20 +35,19 @@ The projection consumes `ReservationEvent` JSON messages from
 | Field | Type | Description |
 | --- | --- | --- |
 | `eventId` | UUID | Unique event identifier. Used for idempotent deduplication. |
+| `eventType` | Enum | `ReservationHeld`, `ReservationConfirmed`, `ReservationRolledBack`. |
+| `occurredAt` | Instant | UTC time the lifecycle change occurred in the engine. |
 | `reservationId` | UUID | Reservation this event belongs to. |
 | `operationId` | String | Caller-supplied idempotency key for the original operation. |
-| `eventType` | Enum | `HELD`, `CONFIRMED`, `ROLLED_BACK`, `EXPIRED`. |
-| `state` | Enum | Reservation state after this event: `HELD`, `CONFIRMED`, `ROLLED_BACK`, `EXPIRED`. |
-| `occurredAt` | Instant | UTC time the lifecycle change occurred in the engine. |
+| `state` | Enum | Reservation state after this event: `HELD`, `CONFIRMED`, `ROLLED_BACK`. |
+| `staleAfter` | Instant | UTC deadline after which the reservation is considered stale (nullable). |
 | `merchantId` | String | Merchant identifier (enriched by the engine at write time). |
 | `operationType` | String | Limit operation type code (enriched). |
-| `direction` | String | `DEBIT` or `CREDIT` (enriched). |
+| `direction` | String | `IN` or `OUT` (enriched). |
 | `amount` | BigDecimal | Monetary amount subject to the reservation (enriched). |
 | `currency` | String | ISO-4217 currency code (enriched). |
-| `staleAfter` | Instant | UTC deadline after which the reservation is considered stale (nullable). |
 | `reasons` | JSON array | Limit decision reason codes (from evaluation). |
 | `matchedRules` | JSON array | Matched rule identifiers from the active manifest. |
-| `payload` | JSON object | Free-form engine-internal payload snapshot. |
 
 The `merchantId`, `operationType`, `direction`, `amount`, and `currency` fields
 were added by enrichment in `pay-limit-engine` (Task 1) to enable read-time
@@ -69,7 +68,7 @@ Flyway migrations live under `src/main/resources/db/migration/`.
 | `event_id` | uuid PK | Unique event id; primary deduplication key. |
 | `reservation_id` | uuid | Identifies the reservation. |
 | `operation_id` | text | Caller operation key. |
-| `event_type` | text | `HELD`, `CONFIRMED`, `ROLLED_BACK`, `EXPIRED`. |
+| `event_type` | text | `ReservationHeld`, `ReservationConfirmed`, `ReservationRolledBack`. |
 | `state` | text | Reservation state after the event. |
 | `occurred_at` | timestamptz | When the event occurred in the engine. |
 | `merchant_id` | text | Enriched merchant identifier. |
@@ -133,7 +132,7 @@ Paginated list of reservation states. Optional query parameters:
 | Parameter | Description |
 | --- | --- |
 | `merchantId` | Filter by merchant. |
-| `state` | Filter by state (`HELD`, `CONFIRMED`, `ROLLED_BACK`, `EXPIRED`). |
+| `state` | Filter by state (`HELD`, `CONFIRMED`, `ROLLED_BACK`). |
 | `from` | ISO-8601 UTC lower bound on `last_occurred_at`. |
 | `to` | ISO-8601 UTC upper bound on `last_occurred_at`. |
 | `page` | Zero-based page number (default `0`). |
@@ -147,14 +146,14 @@ ordered by `occurred_at` ascending.
 ### `GET /internal/v1/limit-projection/reservations/summary`
 
 Returns a read-time aggregate summary. Aggregates are computed at query time
-from `reservation_event`. Optional query parameters:
+from `reservation_state` (rows where `state = 'CONFIRMED'`). Optional query parameters:
 
 | Parameter | Description |
 | --- | --- |
 | `merchantId` | Scope to a single merchant. |
-| `from` | ISO-8601 UTC lower bound on `occurred_at`. |
-| `to` | ISO-8601 UTC upper bound on `occurred_at`. |
-| `groupBy` | Grouping key: `merchant` (default) or `operation_type`. |
+| `from` | ISO-8601 UTC lower bound on `last_occurred_at`. |
+| `to` | ISO-8601 UTC upper bound on `last_occurred_at`. |
+| `groupBy` | Grouping key: `day` or `merchant` (default). |
 
 Returns a list of `{ groupKey, confirmedCount, confirmedAmount, currency }` rows.
 
