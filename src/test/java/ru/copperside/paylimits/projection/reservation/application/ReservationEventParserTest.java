@@ -1,6 +1,5 @@
 package ru.copperside.paylimits.projection.reservation.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import ru.copperside.paylimits.projection.reservation.domain.ReservationEvent;
 import ru.copperside.paylimits.projection.reservation.domain.ReservationEventType;
@@ -13,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReservationEventParserTest {
 
-    private final ReservationEventParser parser = new ReservationEventParser(new ObjectMapper());
+    private final ReservationEventParser parser = new ReservationEventParser();
 
     private static final String VALID = """
             {"eventId":"0f0e2d2a-1111-4a2b-9c3d-000000000001","eventType":"ReservationConfirmed",

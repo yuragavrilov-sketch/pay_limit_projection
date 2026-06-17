@@ -14,11 +14,10 @@ import java.util.UUID;
 @Component
 public class ReservationEventParser {
 
-    private final ObjectMapper objectMapper;
-
-    public ReservationEventParser(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+    // Self-contained mapper: the parser only reads a JSON tree, so it needs no
+    // Spring-configured ObjectMapper (and the context has no ObjectMapper bean
+    // to inject).
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ReservationEvent parse(String json) {
         JsonNode root;
