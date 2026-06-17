@@ -14,7 +14,11 @@ import java.util.UUID;
 @Component
 public class ReservationEventParser {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    public ReservationEventParser(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     public ReservationEvent parse(String json) {
         JsonNode root;

@@ -1,5 +1,6 @@
 package ru.copperside.paylimits.projection.reservation.application;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import ru.copperside.paylimits.projection.reservation.application.port.out.ReservationProjectionStore;
 import ru.copperside.paylimits.projection.reservation.domain.ReservationEvent;
@@ -25,7 +26,7 @@ class ReservationProjectionServiceTest {
         return true;
     };
     private final ReservationProjectionService service =
-            new ReservationProjectionService(new ReservationEventParser(), store);
+            new ReservationProjectionService(new ReservationEventParser(new ObjectMapper()), store);
 
     @Test
     void ingestsValidEvent() {

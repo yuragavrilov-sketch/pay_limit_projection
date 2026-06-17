@@ -35,21 +35,25 @@ public class JdbcReservationQueryStore implements ReservationQueryStore {
         return ts == null ? null : ts.toInstant();
     }
 
+    private static final String STATE_SELECT = "select reservation_id, operation_id, state, merchant_id,"
+            + " operation_type, direction, amount, currency, held_at, last_occurred_at, stale_after"
+            + " from reservation_state";
+
     @Override
     public Optional<ReservationStateView> findByReservationId(UUID reservationId) {
-        return jdbcTemplate.query("select * from reservation_state where reservation_id = ?", STATE, reservationId)
+        return jdbcTemplate.query(STATE_SELECT + " where reservation_id = ?", STATE, reservationId)
                 .stream().findFirst();
     }
 
     @Override
     public Optional<ReservationStateView> findByOperationId(String operationId) {
-        return jdbcTemplate.query("select * from reservation_state where operation_id = ?", STATE, operationId)
+        return jdbcTemplate.query(STATE_SELECT + " where operation_id = ?", STATE, operationId)
                 .stream().findFirst();
     }
 
     @Override
     public List<ReservationStateView> list(String merchantId, String state, Instant from, Instant to, int page, int size) {
-        StringBuilder sql = new StringBuilder("select * from reservation_state where 1 = 1");
+        StringBuilder sql = new StringBuilder(STATE_SELECT + " where 1 = 1");
         List<Object> args = new ArrayList<>();
         if (merchantId != null) { sql.append(" and merchant_id = ?"); args.add(merchantId); }
         if (state != null) { sql.append(" and state = ?"); args.add(state); }
