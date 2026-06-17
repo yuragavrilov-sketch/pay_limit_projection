@@ -45,6 +45,9 @@ management:
         include: health,info,metrics,prometheus
 
 pay-limit-projection:
+  internal-admin:
+    api-key: ${INTERNAL_ADMIN_API_KEY:}
+    required: ${INTERNAL_ADMIN_API_KEY_REQUIRED:false}
   kafka:
     enabled: ${KAFKA_ENABLED:false}
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
