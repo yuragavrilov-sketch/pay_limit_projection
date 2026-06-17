@@ -1,0 +1,14 @@
+spring:
+  flyway:
+    enabled: true
+    schemas: pay_limit_projection
+    default-schema: pay_limit_projection
+    create-schemas: true
+  cloud:
+    config:
+      enabled: false
+    vault:
+      enabled: false
+pay-limit-projection:
+  kafka:
+    enabled: false
