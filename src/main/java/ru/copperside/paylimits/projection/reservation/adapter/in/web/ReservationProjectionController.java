@@ -1,5 +1,6 @@
 package ru.copperside.paylimits.projection.reservation.adapter.in.web;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,8 +46,8 @@ public class ReservationProjectionController {
     ApiResponse<List<ReservationStateView>> list(
             @RequestParam(required = false) String merchantId,
             @RequestParam(required = false) String state,
-            @RequestParam(required = false) Instant from,
-            @RequestParam(required = false) Instant to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
         return ApiResponse.success(queryStore.list(merchantId, state, from, to, page, Math.min(size, 200)), clock);
@@ -60,8 +61,8 @@ public class ReservationProjectionController {
     @GetMapping("/reservations/summary")
     ApiResponse<List<ReservationSummaryRow>> summary(
             @RequestParam(required = false) String merchantId,
-            @RequestParam(required = false) Instant from,
-            @RequestParam(required = false) Instant to,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
             @RequestParam(defaultValue = "merchant") String groupBy) {
         return ApiResponse.success(queryStore.summary(merchantId, from, to, groupBy), clock);
     }

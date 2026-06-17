@@ -105,4 +105,27 @@ class ReservationProjectionApiIntegrationTest {
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).contains("\"confirmedCount\":1").contains("250.00");
     }
+
+    @Test
+    void getByOperationIdReturnsState() {
+        ResponseEntity<String> response = rest.get()
+                .uri("/internal/v1/limit-projection/operations/op-confirmed/reservation")
+                .retrieve()
+                .toEntity(String.class);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).contains("\"state\":\"CONFIRMED\"");
+    }
+
+    @Test
+    void dateRangeFilterBindsAndFilters() {
+        ResponseEntity<String> response = rest.get()
+                .uri("/internal/v1/limit-projection/reservations?merchantId=502118&from=2026-05-29T00:00:00Z&to=2026-05-30T00:00:00Z")
+                .retrieve()
+                .onStatus(status -> status.value() != 200, (req, res) -> {
+                    throw new AssertionError("Expected 200 but got " + res.getStatusCode() + ": " + new String(res.getBody().readAllBytes()));
+                })
+                .toEntity(String.class);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).contains(confirmedReservation.toString());
+    }
 }

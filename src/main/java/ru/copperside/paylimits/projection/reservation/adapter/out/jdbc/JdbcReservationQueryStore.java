@@ -69,7 +69,7 @@ public class JdbcReservationQueryStore implements ReservationQueryStore {
                 """,
                 (rs, n) -> new ReservationEventView(
                         rs.getString("event_id"), rs.getString("event_type"), rs.getString("state"),
-                        rs.getTimestamp("occurred_at").toInstant(), rs.getBigDecimal("amount").toPlainString(),
+                        instant(rs.getTimestamp("occurred_at")), rs.getBigDecimal("amount").toPlainString(),
                         rs.getString("currency")),
                 reservationId);
     }
