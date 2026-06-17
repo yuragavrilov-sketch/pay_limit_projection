@@ -37,6 +37,9 @@ public class ReservationEventKafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(reservationEventConsumerFactory);
+        factory.getContainerProperties().setAckMode(org.springframework.kafka.listener.ContainerProperties.AckMode.RECORD);
+        factory.setCommonErrorHandler(new org.springframework.kafka.listener.DefaultErrorHandler(
+                new org.springframework.util.backoff.FixedBackOff(1000L, org.springframework.util.backoff.FixedBackOff.UNLIMITED_ATTEMPTS)));
         return factory;
     }
 }
