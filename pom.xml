@@ -148,6 +148,22 @@
                     <outputDirectory>${session.executionRootDirectory}/deploy</outputDirectory>
                 </configuration>
             </plugin>
+            <!-- Integration tests (Testcontainers) run via failsafe in the
+                 integration-test/verify phase. Surefire (test phase) runs only unit tests
+                 (*Test/*Tests), so `mvn package` builds the jar + units without a Docker
+                 daemon; `mvn verify` additionally runs the *IT tests where Docker exists. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
