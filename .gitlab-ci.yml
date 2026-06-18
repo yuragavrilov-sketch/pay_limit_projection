@@ -1,0 +1,15 @@
+# Пайплайн pay-limit-projection через переиспользуемый компонент tkbpay/ci-templates/java-spring.
+# Заменяет прежний include tkbpay/microservices/template — в нём нет vault policy-as-code джоб.
+# Компонент даёт стадии validate → test → package(Kaniko) → scan(Trivy) → deploy(manual) → smoke,
+# плюс vault_policy_validate + vault_apply (gated на наличии vault/policy.hcl).
+include:
+  - component: $CI_SERVER_FQDN/tkbpay/ci-templates/java-spring@1.1.11
+    inputs:
+      release_name: pay-limit-projection
+      with_cert: true
+
+# Корп-ранеры тегированные: все джобы компонента (своих tags не задают) должны нести этот тег,
+# иначе висят "no runner". default применяется ко всему пайплайну, включая deploy_test/smoke/vault_*.
+default:
+  tags:
+    - DockerWormHoleGroup

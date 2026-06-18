@@ -1,0 +1,99 @@
+image:
+  repository: harbor.online.tkbbank.ru/tkbpay/pay_limit_projection   # = CI image path ($IMAGE_REGISTRY/$IMAGE_REGISTRY_PROJECT/$CI_PROJECT_NAME); tag injected by CI
+serviceAccount:
+  create: true                   # dedicated SA, bound to the Vault k8s-auth role `pay-limit-projection`
+  name: pay-limit-projection
+imagePullSecrets:
+  enabled: true
+  name: test-adapters-ips        # namespace Harbor pull secret (the dedicated SA has none of its own)
+vault:
+  enabled: false                 # chart's own Vault integration off — the app is the Vault client (Spring Cloud Vault)
+replicaCount: 1
+
+# Kafka→Postgres reservation audit/reporting service. Consumes pay-limit-engine-reservation-events,
+# writes schema `pay_limit_projection`. Exposes internal read API guarded by X-Internal-Admin-Key.
+# No external ingress.
+ingress:
+  enabled: false
+
+ports:
+  - containerPort: 8080
+service:
+  name: pay-limit-projection
+  port: 8080
+  targetPort: 8080
+
+livenessProbe:
+  initialDelaySeconds: 40
+  periodSeconds: 10
+  httpGet:
+    path: /actuator/health
+    port: 8080
+readinessProbe:
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  httpGet:
+    path: /actuator/health
+    port: 8080
+
+# NOTE: this service does NOT start without a reachable Postgres (Flyway + JPA run at boot). Deploy
+# only once the corp Postgres + schema `pay_limit_projection` exist and the datasource is wired in
+# the config-repo file below.
+extraEnvs:
+  - name: SPRING_PROFILES_ACTIVE
+    value: test
+  - name: SERVER_PORT
+    value: "8080"                # align with chart container port
+  # pay.environment drives the Vault KV contexts (pay/<env>/...) and the Config Server label; it must
+  # be an env var because config-data resolves before the active profile is applied (see ADR-0009).
+  - name: PAY_ENVIRONMENT
+    value: test
+  # Enable the external config-data clients (application.yml defaults both to false for standalone).
+  - name: VAULT_ENABLED
+    value: "true"
+  - name: CONFIG_SERVER_ENABLED
+    value: "true"
+  # --- Vault: application secrets read directly (Spring Cloud Vault, Kubernetes auth) ---
+  - name: SPRING_CLOUD_VAULT_URI
+    value: "https://vault.online.tkbbank.ru"
+  - name: SPRING_CLOUD_VAULT_AUTHENTICATION
+    value: "KUBERNETES"
+  - name: SPRING_CLOUD_VAULT_KUBERNETES_KUBERNETES_PATH
+    value: "payadmin-test"
+  - name: SPRING_CLOUD_VAULT_KUBERNETES_ROLE
+    value: "pay-limit-projection"
+  # Vault holds the DB password and the internal-admin-key for the /internal/v1/limit-projection/** API.
+  - name: VAULT_KV_CONTEXTS
+    value: "test/pay-limit-projection-db-password,test/pay-limit-projection-internal-admin-key"
+  # --- Config Server (payconfig-server, Basic auth) ---
+  - name: CONFIG_SERVER_URL
+    value: "http://payconfig-server:8080"
+  - name: CONFIG_CLIENT_USERNAME
+    value: "configadmin"
+  # Bootstrap credential (ADR-0009): from the SAME k8s Secret/key payconfig-server validates against.
+  - name: CONFIG_CLIENT_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: payconfig-server-secret
+        key: CONFIG_SERVER_PASSWORD
+  # --- Kafka: Kafka consumer for reservation events ---
+  - name: KAFKA_ENABLED
+    value: "true"
+  # KAFKA_BOOTSTRAP_SERVERS is NOT set here — it comes from Config Server (config-repo branch `test`,
+  # file `pay-limit-projection/application.yaml`), same pattern as sbp-router-management.
+  # Projection-specific topic and consumer group.
+  - name: KAFKA_TOPIC
+    value: pay-limit-engine-reservation-events
+  - name: KAFKA_GROUP_ID
+    value: pay-limit-projection
+  # Flyway must run at boot to create / migrate the `pay_limit_projection` schema.
+  - name: FLYWAY_ENABLED
+    value: "true"
+  # The /internal/v1/limit-projection/** API is guarded by X-Internal-Admin-Key in k8s.
+  - name: INTERNAL_ADMIN_API_KEY_REQUIRED
+    value: "true"
+  # Non-secret config (datasource url/username, Flyway schema) comes from Config Server — config-repo
+  # branch `test`, file `pay-limit-projection/application.yaml`. Not set here.
+  # Application secrets read from Vault (see VAULT_KV_CONTEXTS):
+  #   pay/test/pay-limit-projection-db-password          key spring.datasource.password
+  #   pay/test/pay-limit-projection-internal-admin-key   key pay-limit-projection.internal-admin.api-key
